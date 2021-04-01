@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/zngue/go_helper/pkg"
 	"github.com/zngue/go_helper/pkg/http"
+	"github.com/zngue/go_helper/pkg/sign_chan"
 	"testing"
 	"time"
 )
@@ -86,7 +88,37 @@ func TestHttp(t *testing.T) {
 		EndPoint:  "api/bangbang/groupownet/home",
 	}
 	url, err2 := mico.Response()
+
 	fmt.Println(url, err2)
 
 	fmt.Println(err2, mysql, redis, err, err3, mico)
+}
+
+func TestUserInfoHttp(t *testing.T) {
+	http, err := pkg.GinRun("3378", func(group *gin.RouterGroup) {
+
+	})
+	if err != nil {
+		sign_chan.SignLog(err)
+	}
+	go func() {
+		cerr := pkg.NewConfig("app", "eg/conf", "yaml")
+		if cerr != nil {
+			sign_chan.SignLog(cerr)
+		}
+		_, merr := pkg.NewMysql()
+		if merr != nil {
+			sign_chan.SignLog(merr)
+		}
+	}()
+	go func() {
+		err2 := http.ListenAndServe()
+		if err2 != nil {
+			sign_chan.SignLog(err2)
+		}
+	}()
+	sign_chan.ListClose(func(ctx context.Context) error {
+		return http.Shutdown(ctx)
+	})
+
 }
