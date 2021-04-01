@@ -15,7 +15,7 @@ type RouterFun func(group *gin.RouterGroup)
 *@Date 31/3/2021 11:36
 *@desc
  */
-func GinRun(port string, fnRouter ...RouterFun) {
+func GinRun(port string, fnRouter ...RouterFun) (*http.Server, error) {
 	engine := gin.New()
 	gin.SetMode(gin.ReleaseMode)
 	if len(fnRouter) > 0 {
@@ -26,8 +26,9 @@ func GinRun(port string, fnRouter ...RouterFun) {
 	}
 	server := Http(engine, port)
 	if err := server.ListenAndServe(); err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
+	return server, nil
 
 }
 
