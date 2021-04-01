@@ -1,0 +1,10 @@
+micro:
+    isMicro: true #是否启动微服务
+    redisDB: 11 #微服务里redis 数据库
+    isLocal: false #是否使用本地数据
+    serviceList:
+        user: 127.0.0.1:8082
+        cate: 127.0.0.1:8083
+        cates: 127.0.0.1:8084
+
+

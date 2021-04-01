@@ -1,0 +1,4 @@
+LoadConfig:
+    - "config"
+    - "db"
+    - "micro"
