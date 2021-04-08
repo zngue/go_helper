@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
 )
@@ -13,13 +14,40 @@ type CommonRequest struct {
 	OrderMap    map[string]interface{}
 	OrderString string `form:"orderString"`
 	db          *gorm.DB
+	Actions     int `form:"action"` //默认
+	Delete      int `form:"delete"` //是否包含删除数据
+	Data        interface{}
+	Error       error
+}
+
+func (c *CommonRequest) Init(db *gorm.DB, i interface{}) (tx *gorm.DB) {
+	c.SetDB(db)
+	c.OrderWhere(i)
+	c.Action()
+	return c.db
+}
+
+func (c *CommonRequest) Action() {
+	if c.Data == nil {
+		c.Error = errors.New("data is nil can not update")
+		return
+	}
+	switch c.Actions {
+	case 1:
+		c.db = c.db.Updates(c.Data)
+	case 2:
+		c.db = c.db.Find(c.Data)
+	case 3:
+		c.db = c.db.First(c.Data)
+	case 4:
+		c.db = c.db.Delete(c.Data)
+	}
 }
 
 func (c *CommonRequest) OrderWhere(i interface{}) {
 	if c.db == nil {
 		fmt.Println("please first set db method SetDB()")
 	}
-	c.Paginate()
 	ext := &GormExt{
 		DB:          c.db,
 		OrderString: c.OrderString,
@@ -27,7 +55,9 @@ func (c *CommonRequest) OrderWhere(i interface{}) {
 		I:           i,
 	}
 	c.db = ext.Init()
-	c.Paginate()
+	if c.IsPaginate {
+		c.Paginate()
+	}
 }
 func (c *CommonRequest) PageLimitOffset() int {
 	if c.Page == 0 {
@@ -48,9 +78,6 @@ func (c *CommonRequest) Paginate() {
 		c.PageLimitOffset()
 		c.db = c.db.Limit(c.PageSize)
 	}
-}
-func (c *CommonRequest) WhereOr(ormap map[string]interface{}) {
-	c.db = c.db.Or(ormap)
 }
 func (c *CommonRequest) SetDB(db *gorm.DB) {
 	c.db = db

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/zngue/go_helper/eg/temp"
 	"github.com/zngue/go_helper/pkg"
 	"github.com/zngue/go_helper/pkg/http"
 	"github.com/zngue/go_helper/pkg/sign_chan"
@@ -121,4 +122,17 @@ func TestUserInfoHttp(t *testing.T) {
 		return http.Shutdown(ctx)
 	})
 
+}
+
+func TestMysql(t *testing.T) {
+	pkg.NewConfig("app", "eg/conf", "yaml")
+	pkg.NewMysql()
+	var req temp.Request
+	//req.Data=&temp.ArticleList{}
+	model := pkg.MysqlConn.Model(&temp.ArticleList{})
+	req.Actions = 1
+	req.IsPaginate = true
+	req.PageSize = 100
+	err := req.Common(model).Error
+	fmt.Println(err)
 }
