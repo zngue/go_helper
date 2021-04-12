@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"errors"
-	"fmt"
 	"gorm.io/gorm"
 )
 
@@ -26,14 +25,13 @@ func (c *CommonRequest) Init(db *gorm.DB, i interface{}) (tx *gorm.DB) {
 	c.Action()
 	return c.db
 }
-
 func (c *CommonRequest) Action() {
-	if c.Data == nil {
-		c.Error = errors.New("data is nil can not update")
-		return
-	}
 	switch c.Actions {
 	case 1:
+		if c.Data == nil {
+			c.Error = errors.New("data is nil can not update")
+			return
+		}
 		c.db = c.db.Updates(c.Data)
 	case 2:
 		c.db = c.db.Find(c.Data)
@@ -46,7 +44,8 @@ func (c *CommonRequest) Action() {
 
 func (c *CommonRequest) OrderWhere(i interface{}) {
 	if c.db == nil {
-		fmt.Println("please first set db method SetDB()")
+		c.Error = errors.New("please first set db method SetDB()")
+		return
 	}
 	ext := &GormExt{
 		DB:          c.db,
