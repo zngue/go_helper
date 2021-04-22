@@ -1,6 +1,7 @@
 package where
 
 import (
+	"github.com/spf13/cast"
 	"gorm.io/gorm"
 	"reflect"
 )
@@ -47,7 +48,8 @@ func (g *Grom) ResiterAction(where string, hk HooksWhere) {
 	g.HooksWhere[where] = hk
 }
 func (g *Grom) SeparatorDefualt(option *HooksOption) bool {
-	if option.Default != option.Value.String() {
+	toString := cast.ToString(option.Value.Interface())
+	if option.Default != toString {
 		return true
 	}
 	return false
@@ -71,6 +73,9 @@ func (g *Grom) Where(db *gorm.DB, i interface{}) *gorm.DB {
 	for i := 0; i < refValue.NumField(); i++ {
 		f := refType.Field(i)
 		valueInterface := refValue.Field(i)
+		if &valueInterface == nil {
+			continue
+		}
 		if valueInterface.Kind() == reflect.Ptr {
 			continue
 		}
@@ -87,6 +92,9 @@ func (g *Grom) Where(db *gorm.DB, i interface{}) *gorm.DB {
 		field := f.Tag.Get("field")
 		defaults := f.Tag.Get("default")
 		where := f.Tag.Get("where")
+		if field == "" || where == "" {
+			continue
+		}
 		option := HooksOption{
 			Field:       field,
 			Default:     defaults,
