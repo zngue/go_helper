@@ -2,8 +2,11 @@ package pkg
 
 import (
 	"errors"
+	"github.com/zngue/go_helper/pkg/where"
 	"gorm.io/gorm"
 )
+
+var ResgterWhereHooks []where.ResiterHooksOption
 
 type CommonRequest struct {
 	Page        int  `form:"page" `      //当前页码
@@ -18,6 +21,7 @@ type CommonRequest struct {
 	Data        interface{}
 	Error       error
 }
+
 func (c *CommonRequest) Init(db *gorm.DB, i interface{}) (tx *gorm.DB) {
 	c.SetDB(db)
 	c.OrderWhere(i)
@@ -27,20 +31,20 @@ func (c *CommonRequest) Init(db *gorm.DB, i interface{}) (tx *gorm.DB) {
 
 func (c *CommonRequest) Action() {
 	switch c.Actions {
-		case 1:
-			if c.Data == nil {
-				c.Error = errors.New("data is nil can not update")
-				return
-			}
-			c.db = c.db.Updates(c.Data)
-		case 2:
-			c.db = c.db.Find(c.Data)
-		case 3:
-			c.db = c.db.First(c.Data)
-		case 4:
-			c.db = c.db.Delete(c.Data)
-		case 5:
-			c.db = c.db.Create(c.Data)
+	case 1:
+		if c.Data == nil {
+			c.Error = errors.New("data is nil can not update")
+			return
+		}
+		c.db = c.db.Updates(c.Data)
+	case 2:
+		c.db = c.db.Find(c.Data)
+	case 3:
+		c.db = c.db.First(c.Data)
+	case 4:
+		c.db = c.db.Delete(c.Data)
+	case 5:
+		c.db = c.db.Create(c.Data)
 	}
 }
 
@@ -49,13 +53,10 @@ func (c *CommonRequest) OrderWhere(i interface{}) {
 		c.Error = errors.New("please first set db method SetDB()")
 		return
 	}
-	ext := &GormExt{
-		DB:          c.db,
-		OrderString: c.OrderString,
-		Order:       c.OrderMap,
-		I:           i,
+	c.db = where.NewGorm().Where(c.db, i)
+	if c.OrderMap != nil && c.OrderString != "" {
+		c.db = Order(c.db, c.OrderMap, c.OrderString)
 	}
-	c.db = ext.Init()
 	c.Paginate()
 
 }
