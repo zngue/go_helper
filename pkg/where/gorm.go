@@ -80,7 +80,7 @@ func (g *Grom) Where(db *gorm.DB, i interface{}) *gorm.DB {
 			continue
 		}
 		if valueInterface.Kind() == reflect.Struct && valueInterface.Interface() != nil {
-			db = g.Where(db, valueInterface)
+			db = g.Where(db, valueInterface.Interface())
 		}
 		value := valueInterface.Interface()
 		if f.Tag == "" {
