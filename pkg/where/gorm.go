@@ -102,6 +102,7 @@ func (g *Grom) Where(db *gorm.DB, i interface{}) *gorm.DB {
 			Where:       where,
 			StructField: f,
 			Value:       valueInterface,
+			DB:          db,
 		}
 		if g.WhereAction(&option) {
 			db = g.WhereSeparator(&option)
@@ -134,5 +135,5 @@ func NewGorm() GromInterface {
 	return g
 }
 func RegsterHooks(options ...ResiterHooksOption) {
-	Resiter = options
+	Resiter = append(Resiter, options...)
 }

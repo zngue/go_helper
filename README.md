@@ -7,7 +7,7 @@
 field 查询的字段
 default 默认值
 ```
-##实例
+## 实例
     
    ```go
 import (
@@ -39,6 +39,12 @@ func main() {
 }
 
 ```
+
+## struct tag 讲解
+    field:数据库接查询字段名字 
+    where:where条件
+    default：默认值，当传入值等于默认值的时候不参与条件筛选
+    form：传入值接收值
 
 ### where条件支持那些
 <table>
@@ -104,3 +110,8 @@ func main() {
     </tr>
 
 </table>
+
+## 自定义条件
+    ```
+    ```
+

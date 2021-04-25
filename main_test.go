@@ -4,10 +4,17 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/cast"
+	pb "github.com/zngue/go_helper/eg/pbmodel"
 	"github.com/zngue/go_helper/eg/temp"
 	"github.com/zngue/go_helper/pkg"
+	"github.com/zngue/go_helper/pkg/grpc_run"
 	"github.com/zngue/go_helper/pkg/http"
 	"github.com/zngue/go_helper/pkg/sign_chan"
+	"github.com/zngue/go_helper/pkg/where"
+	"google.golang.org/grpc"
+	"gorm.io/gorm"
+	"strings"
 	"testing"
 	"time"
 )
@@ -135,4 +142,50 @@ func TestMysql(t *testing.T) {
 	req.PageSize = 100
 	err := req.Common(model).Error
 	fmt.Println(err)
+}
+
+func TestGrpcService(t *testing.T) {
+	pkg.NewConfig("app", "eg/conf", "yaml")
+	err2 := grpc_run.ServiceLocalList()
+	fmt.Println(err2)
+	err := grpc_run.ServiceRegister("sy:user", func(server *grpc.Server) {
+		pb.RegisterAmpArticleServiceServer(server, new(pb.UnimplementedAmpArticleServiceServer))
+	})
+	fmt.Println(err)
+}
+
+func TestGrpcClient(t *testing.T) {
+	pkg.NewConfig("app", "eg/conf", "yaml")
+	err2 := grpc_run.ServiceLocalList()
+	errgrpx := grpc_run.ClientRegister("sy:user", func(conn *grpc.ClientConn, ctx context.Context) (err error) {
+		in := pb.AmpArticle{
+			Id: 1,
+		}
+		client := pb.NewAmpArticleServiceClient(conn)
+		list, err4 := client.List(ctx, &in)
+		fmt.Println(list, err4)
+		return nil
+	})
+	fmt.Println(err2, errgrpx)
+}
+func TestWhere(t *testing.T) {
+
+	where.RegsterHooks(where.ResiterHooksOption{
+		Hooks: func(option *where.HooksOption) *gorm.DB {
+			s := option.Value.String()
+			sList := strings.Split(s, ",")
+			if len(sList) == 2 && sList[0] != "" && sList[1] != "" {
+				return option.DB.Where(option.Field+" >= ? ", sList[0]).Where(option.Field+" <= ?", sList[1])
+			}
+			return option.DB
+		},
+		Action: func(option *where.HooksOption) bool {
+			if cast.ToString(option.Value.Interface()) != option.Default {
+				return true
+			}
+			return false
+		},
+		Where: "between",
+	})
+
 }

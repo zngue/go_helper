@@ -1,0 +1,5 @@
+grpc:
+    ServiceList:
+        sy:user: 127.0.0.1:7788
+        sy:news: 127.0.0.1:7799
+        sy:comment: 127.0.0.1:7766

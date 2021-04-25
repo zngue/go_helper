@@ -2,3 +2,4 @@ LoadConfig:
     - "config"
     - "db"
     - "micro"
+    - "grpc"
