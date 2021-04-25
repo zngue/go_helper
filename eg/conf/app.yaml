@@ -2,4 +2,4 @@ LoadConfig:
     config: json
     db: yaml
     micro: yaml
-    grpc:
+    grpc: yaml
