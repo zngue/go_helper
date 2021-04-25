@@ -12,14 +12,60 @@ import (
 *@Date 31/3/2021 11:06
 *@desc
  */
-func NewConfig(Name, path, ext string) error {
 
-	config := &Config{
-		Name: Name,
-		Path: path,
-		Ext:  ext,
+var configDefult = Config{
+	Name: "app",
+	Path: "conf",
+	Ext:  "yaml",
+}
+
+type ConfigFn func(config *Config) *Config
+
+/*
+*@Author Administrator
+*@Date 25/4/2021 14:36
+*@desc 配置默认读取应用名字
+
+ */
+func Name(name string) ConfigFn {
+	return func(config *Config) *Config {
+		config.Name = name
+		return config
 	}
-	return config.InitConfig()
+}
+
+/*
+*@Author Administrator
+*@Date 25/4/2021 14:39
+*@desc 配置路径
+ */
+func Path(path string) ConfigFn {
+	return func(config *Config) *Config {
+		config.Path = path
+		return config
+	}
+}
+
+/*
+*@Author Administrator
+*@Date 25/4/2021 14:40
+*@desc
+ */
+func Ext(ext string) ConfigFn {
+	return func(config *Config) *Config {
+		config.Ext = ext
+		return config
+	}
+}
+
+func NewConfig(configList ...ConfigFn) error {
+
+	if len(configList) > 0 {
+		for _, fn := range configList {
+			fn(&configDefult)
+		}
+	}
+	return configDefult.InitConfig()
 }
 
 type Config struct {
