@@ -49,7 +49,7 @@ func Path(path string) ConfigFn {
 /*
 *@Author Administrator
 *@Date 25/4/2021 14:40
-*@desc
+*@desc 文件后缀
  */
 func Ext(ext string) ConfigFn {
 	return func(config *Config) *Config {
@@ -86,11 +86,13 @@ func (c *Config) InitConfig() error {
 	if err := viper.ReadInConfig(); err != nil { // viper解析配置文件
 		return err
 	}
-
-	slice := viper.GetStringSlice("LoadConfig")
-	for _, FileName := range slice {
-		viper.SetConfigName(FileName)
-		viper.SetConfigType(c.Ext)
+	mapString := viper.GetStringMapString("LoadConfig")
+	for fileName, ext := range mapString {
+		if ext == "" {
+			ext = c.Ext
+		}
+		viper.SetConfigName(fileName)
+		viper.SetConfigType(ext)
 		err := viper.MergeInConfig()
 		if err != nil {
 			return err

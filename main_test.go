@@ -36,7 +36,7 @@ type Ads struct {
 }
 
 func MsiOne() {
-	err2 := pkg.NewConfig("app", "eg/conf", "yaml")
+	err2 := pkg.NewConfig(pkg.Path("eg/conf"))
 	mysql, err := pkg.NewMysql()
 	redis, err3 := pkg.NewRedis()
 	pkg.GinRun("250", func(group *gin.RouterGroup) {
@@ -47,7 +47,7 @@ func MsiOne() {
 	fmt.Println(err2, mysql, redis, err, err3)
 }
 func MsiTwo() {
-	err2 := pkg.NewConfig("app", "eg/confs", "yaml")
+	err2 := pkg.NewConfig()
 	mysql, err := pkg.NewMysql()
 	redis, err3 := pkg.NewRedis()
 	pkg.GinRun("251", func(group *gin.RouterGroup) {
@@ -58,7 +58,7 @@ func MsiTwo() {
 	fmt.Println(err2, mysql, redis, err, err3)
 }
 func Msithree() {
-	err2 := pkg.NewConfig("app", "eg/confss", "yaml")
+	err2 := pkg.NewConfig()
 	mysql, err := pkg.NewMysql()
 	redis, err3 := pkg.NewRedis()
 	pkg.GinRun("252", func(group *gin.RouterGroup) {
@@ -87,7 +87,7 @@ func TestNs(t *testing.T) {
 	fmt.Println(s)
 }
 func TestHttp(t *testing.T) {
-	err2 := pkg.NewConfig("app", "eg/conf", "yaml")
+	err2 := pkg.NewConfig()
 	mysql, err := pkg.NewMysql()
 	redis, err3 := pkg.NewRedis()
 	mico := http.HttpMico{
@@ -110,7 +110,7 @@ func TestUserInfoHttp(t *testing.T) {
 		sign_chan.SignLog(err)
 	}
 	go func() {
-		cerr := pkg.NewConfig("app", "eg/conf", "yaml")
+		cerr := pkg.NewConfig(pkg.Path("eg/conf"))
 		if cerr != nil {
 			sign_chan.SignLog(cerr)
 		}
@@ -132,7 +132,7 @@ func TestUserInfoHttp(t *testing.T) {
 }
 
 func TestMysql(t *testing.T) {
-	pkg.NewConfig("app", "eg/conf", "yaml")
+	pkg.NewConfig(pkg.Path("eg/conf"))
 	pkg.NewMysql()
 	var req temp.Request
 	//req.Data=&temp.ArticleList{}
@@ -145,7 +145,7 @@ func TestMysql(t *testing.T) {
 }
 
 func TestGrpcService(t *testing.T) {
-	pkg.NewConfig("app", "eg/conf", "yaml")
+	pkg.NewConfig(pkg.Path("eg/conf"))
 	err2 := grpc_run.ServiceLocalList()
 	fmt.Println(err2)
 	err := grpc_run.ServiceRegister("sy:user", func(server *grpc.Server) {
@@ -155,7 +155,7 @@ func TestGrpcService(t *testing.T) {
 }
 
 func TestGrpcClient(t *testing.T) {
-	pkg.NewConfig("app", "eg/conf", "yaml")
+	pkg.NewConfig(pkg.Path("eg/conf"))
 	err2 := grpc_run.ServiceLocalList()
 	errgrpx := grpc_run.ClientRegister("sy:user", func(conn *grpc.ClientConn, ctx context.Context) (err error) {
 		in := pb.AmpArticle{

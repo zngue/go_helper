@@ -1,5 +1,5 @@
 LoadConfig:
-    - "config"
-    - "db"
-    - "micro"
-    - "grpc"
+    config: json
+    db: yaml
+    micro: yaml
+    grpc:
