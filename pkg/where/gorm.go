@@ -135,5 +135,7 @@ func NewGorm() GromInterface {
 	return g
 }
 func RegsterHooks(options ...ResiterHooksOption) {
-	Resiter = append(Resiter, options...)
+	if options != nil {
+		Resiter = append(Resiter, options...)
+	}
 }
