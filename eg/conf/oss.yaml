@@ -1,0 +1,6 @@
+oss:
+    endpoint: "oss-cn-hangzhou.aliyuncs.com"
+    accessKeySecret: "Zat4VE4HLGTegYjZsUUdgB4wxWqC2M"
+    accessKeyID: "LTAI4G67MUQhur7vsS8xJ6K4"
+    bucketName: "syimages"
+    domain: "https://image2.cqcb.com/"

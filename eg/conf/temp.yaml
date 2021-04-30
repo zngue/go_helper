@@ -1,0 +1,10 @@
+temp:
+    path: app
+    modepath: github.com/zngue/file_code
+    servicepath: service
+    routerpath: router
+    modelpath: model
+    pbpath: pb
+    controllerpath: controller
+    requestpath: request
+    pbCode: true #是否生成pb文件

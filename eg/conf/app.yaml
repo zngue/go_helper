@@ -1,5 +1,8 @@
 LoadConfig:
-    config: json
-    db: yaml
-    micro: yaml
-    grpc: yaml
+    config: yaml
+    db:
+    micro:
+    grpc:
+    oss:
+    temp:
+    user: json

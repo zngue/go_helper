@@ -2,75 +2,21 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cast"
-	pb "github.com/zngue/go_helper/eg/pbmodel"
-	"github.com/zngue/go_helper/eg/temp"
 	"github.com/zngue/go_helper/pkg"
-	"github.com/zngue/go_helper/pkg/grpc_run"
+	"github.com/zngue/go_helper/pkg/config"
 	"github.com/zngue/go_helper/pkg/http"
+	"github.com/zngue/go_helper/pkg/oss"
 	"github.com/zngue/go_helper/pkg/sign_chan"
 	"github.com/zngue/go_helper/pkg/where"
-	"google.golang.org/grpc"
 	"gorm.io/gorm"
+	"io/ioutil"
 	"strings"
 	"testing"
-	"time"
 )
-
-type SybbAds struct {
-	ID        int       `gorm:"primary_key;column:id;type:int(11) unsigned;not null" json:"id"`
-	NewsID    int       `gorm:"column:news_id;type:int(11)" json:"news_id"`          // 类型：1社群，2服务
-	Type      int8      `gorm:"column:type;type:tinyint(2)" json:"type"`             // 跳转类型，1外链，2原生
-	Title     string    `gorm:"column:title;type:varchar(255)" json:"title"`         // 标题
-	ImageURL  string    `gorm:"column:image_url;type:varchar(255)" json:"image_url"` // 图片链接
-	URL       string    `gorm:"column:url;type:varchar(255)" json:"url"`             // 外链
-	CreatedAt time.Time `gorm:"column:created_at;type:timestamp" json:"created_at"`
-	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp" json:"updated_at"`
-	BbType    int8      `gorm:"column:bb_type;type:tinyint(2)" json:"bb_type"` // 1-社群，2-服务，345678--待定
-}
-
-type Ads struct {
-	pkg.CommonRequest
-}
-
-func MsiOne() {
-	err2 := pkg.NewConfig(pkg.Path("eg/conf"))
-	mysql, err := pkg.NewMysql()
-	redis, err3 := pkg.NewRedis()
-	pkg.GinRun("250", func(group *gin.RouterGroup) {
-		group.GET("", func(context *gin.Context) {
-			context.JSON(200, 250)
-		})
-	})
-	fmt.Println(err2, mysql, redis, err, err3)
-}
-func MsiTwo() {
-	err2 := pkg.NewConfig()
-	mysql, err := pkg.NewMysql()
-	redis, err3 := pkg.NewRedis()
-	pkg.GinRun("251", func(group *gin.RouterGroup) {
-		group.GET("", func(context *gin.Context) {
-			context.JSON(200, 251)
-		})
-	})
-	fmt.Println(err2, mysql, redis, err, err3)
-}
-func Msithree() {
-	err2 := pkg.NewConfig()
-	mysql, err := pkg.NewMysql()
-	redis, err3 := pkg.NewRedis()
-	pkg.GinRun("252", func(group *gin.RouterGroup) {
-		group.GET("", func(context *gin.Context) {
-			context.JSON(200, 252)
-		})
-	})
-	fmt.Println(err2, mysql, redis, err, err3)
-}
-func TestUn(t *testing.T) {
-	MsiOne()
-}
 
 type UserInfo func(user string) string
 
@@ -131,45 +77,7 @@ func TestUserInfoHttp(t *testing.T) {
 
 }
 
-func TestMysql(t *testing.T) {
-	pkg.NewConfig(pkg.Path("eg/conf"))
-	pkg.NewMysql()
-	var req temp.Request
-	//req.Data=&temp.ArticleList{}
-	model := pkg.MysqlConn.Model(&temp.ArticleList{})
-	req.Actions = 1
-	req.IsPaginate = true
-	req.PageSize = 100
-	err := req.Common(model).Error
-	fmt.Println(err)
-}
-
-func TestGrpcService(t *testing.T) {
-	pkg.NewConfig(pkg.Path("eg/conf"))
-	err2 := grpc_run.ServiceLocalList()
-	fmt.Println(err2)
-	err := grpc_run.ServiceRegister("sy:user", func(server *grpc.Server) {
-		pb.RegisterAmpArticleServiceServer(server, new(pb.UnimplementedAmpArticleServiceServer))
-	})
-	fmt.Println(err)
-}
-
-func TestGrpcClient(t *testing.T) {
-	pkg.NewConfig(pkg.Path("eg/conf"))
-	err2 := grpc_run.ServiceLocalList()
-	errgrpx := grpc_run.ClientRegister("sy:user", func(conn *grpc.ClientConn, ctx context.Context) (err error) {
-		in := pb.AmpArticle{
-			Id: 1,
-		}
-		client := pb.NewAmpArticleServiceClient(conn)
-		list, err4 := client.List(ctx, &in)
-		fmt.Println(list, err4)
-		return nil
-	})
-	fmt.Println(err2, errgrpx)
-}
 func TestWhere(t *testing.T) {
-
 	where.RegsterHooks(where.ResiterHooksOption{
 		Hooks: func(option *where.HooksOption) *gorm.DB {
 			s := option.Value.String()
@@ -187,5 +95,33 @@ func TestWhere(t *testing.T) {
 		},
 		Where: "between",
 	})
+
+}
+
+/*
+*@Author Administrator
+*@Date 29/4/2021 11:24
+*@desc
+ */
+func TestOss(t *testing.T) {
+
+	config.NewConfig(config.Path("eg/conf"))
+
+	run, _ := pkg.GinRun("7898", func(group *gin.RouterGroup) {
+
+		group.POST("upload", func(c *gin.Context) {
+
+			all, _ := ioutil.ReadAll(c.Request.Body)
+			decodeString, err := base64.StdEncoding.DecodeString(string(all))
+			fmt.Println(err)
+			file := oss.NewUploadFile()
+			var bt [][]byte
+			bt = append(bt, []byte(decodeString))
+			byByte, _ := file.UploadFileByByte(bt)
+			fmt.Println(byByte)
+		})
+
+	})
+	run.ListenAndServe()
 
 }
