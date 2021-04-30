@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type RouterFun func(group *gin.RouterGroup)
+type RouterFun func(group *gin.Engine)
 
 /*
 *@Author Administrator
@@ -19,9 +19,8 @@ func GinRun(port string, fnRouter ...RouterFun) (*http.Server, error) {
 	engine := gin.New()
 	gin.SetMode(gin.DebugMode)
 	if len(fnRouter) > 0 {
-		ApiGroup := engine.Group("")
 		for _, fun := range fnRouter {
-			fun(ApiGroup)
+			fun(engine)
 		}
 	}
 	server := Http(engine, port)
