@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type RouterFun func(group *gin.Engine)
+type RouterFun func(engine *gin.Engine)
 
 /*
 *@Author Administrator

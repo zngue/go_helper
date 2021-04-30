@@ -1,19 +1,14 @@
 package main
 
 import (
-	"context"
-	"encoding/base64"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cast"
 	"github.com/zngue/go_helper/pkg"
 	"github.com/zngue/go_helper/pkg/config"
 	"github.com/zngue/go_helper/pkg/http"
-	"github.com/zngue/go_helper/pkg/oss"
-	"github.com/zngue/go_helper/pkg/sign_chan"
 	"github.com/zngue/go_helper/pkg/where"
 	"gorm.io/gorm"
-	"io/ioutil"
 	"strings"
 	"testing"
 )
@@ -48,35 +43,6 @@ func TestHttp(t *testing.T) {
 	fmt.Println(err2, mysql, redis, err, err3, mico)
 }
 
-func TestUserInfoHttp(t *testing.T) {
-	http, err := pkg.GinRun("3378", func(group *gin.RouterGroup) {
-
-	})
-	if err != nil {
-		sign_chan.SignLog(err)
-	}
-	go func() {
-		cerr := pkg.NewConfig(pkg.Path("eg/conf"))
-		if cerr != nil {
-			sign_chan.SignLog(cerr)
-		}
-		_, merr := pkg.NewMysql()
-		if merr != nil {
-			sign_chan.SignLog(merr)
-		}
-	}()
-	go func() {
-		err2 := http.ListenAndServe()
-		if err2 != nil {
-			sign_chan.SignLog(err2)
-		}
-	}()
-	sign_chan.ListClose(func(ctx context.Context) error {
-		return http.Shutdown(ctx)
-	})
-
-}
-
 func TestWhere(t *testing.T) {
 	where.RegsterHooks(where.ResiterHooksOption{
 		Hooks: func(option *where.HooksOption) *gorm.DB {
@@ -107,19 +73,7 @@ func TestOss(t *testing.T) {
 
 	config.NewConfig(config.Path("eg/conf"))
 
-	run, _ := pkg.GinRun("7898", func(group *gin.RouterGroup) {
-
-		group.POST("upload", func(c *gin.Context) {
-
-			all, _ := ioutil.ReadAll(c.Request.Body)
-			decodeString, err := base64.StdEncoding.DecodeString(string(all))
-			fmt.Println(err)
-			file := oss.NewUploadFile()
-			var bt [][]byte
-			bt = append(bt, []byte(decodeString))
-			byByte, _ := file.UploadFileByByte(bt)
-			fmt.Println(byByte)
-		})
+	run, _ := pkg.GinRun("7898", func(engine *gin.Engine) {
 
 	})
 	run.ListenAndServe()
