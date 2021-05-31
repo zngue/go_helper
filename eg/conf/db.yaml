@@ -8,6 +8,7 @@ db:
     TIMEZONE: Asia/Shanghai
     DEBUG:   true
     CHARSET: utf8mb4
+    LOC:  Asia%2FShanghai #Local
     ParseTime: True
 REDIS:
     HOST: 127.0.0.1
