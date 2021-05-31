@@ -58,7 +58,8 @@ func NewMysql(opt ...gorm.Option) (*gorm.DB, error) {
 	mysqldb := viper.GetString("db.DATABASE")
 	mysqlCharset := viper.GetString("db.CHARSET")
 	mysqlParseTime := viper.GetString("db.ParseTime")
-	dbs := mysqluser + ":" + mysqlpass + "@tcp(" + mysqlurls + ")/" + mysqldb + "?charset=" + mysqlCharset + "&parseTime=" + mysqlParseTime + "&loc=Asia%2FShanghai"
+	loc := viper.GetString("db.LOC")
+	dbs := mysqluser + ":" + mysqlpass + "@tcp(" + mysqlurls + ")/" + mysqldb + "?charset=" + mysqlCharset + "&parseTime=" + mysqlParseTime + "&loc=" + loc
 	db, errDb := gorm.Open(mysql.Open(dbs), opt...)
 	if errDb != nil {
 		return nil, errDb
