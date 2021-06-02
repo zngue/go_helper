@@ -24,6 +24,8 @@ type ResiterHooksOption struct {
 type Hooks func(option *HooksOption) *gorm.DB
 type HooksWhere func(option *HooksOption) bool
 
+var whereIn GromInterface
+
 type Grom struct {
 	Hooks      []Hooks
 	HooksList  map[string]Hooks
@@ -119,6 +121,9 @@ func (g *Grom) WhereSeparator(option *HooksOption) *gorm.DB {
 }
 
 func NewGorm() GromInterface {
+	if whereIn != nil {
+		return whereIn
+	}
 	g := new(Grom)
 	g.HooksList = NewAction()
 	options := Resiter
@@ -132,6 +137,7 @@ func NewGorm() GromInterface {
 			}
 		}
 	}
+	whereIn = g
 	return g
 }
 func RegsterHooks(options ...ResiterHooksOption) {
