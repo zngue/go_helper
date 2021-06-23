@@ -125,6 +125,7 @@ func NewGorm() GromInterface {
 		return whereIn
 	}
 	g := new(Grom)
+	g.HooksWhere = map[string]HooksWhere{}
 	g.HooksList = NewAction()
 	options := Resiter
 	if len(options) > 0 {
