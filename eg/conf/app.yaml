@@ -6,3 +6,4 @@ LoadConfig:
     oss:
     temp:
     user: json
+    jwt:
