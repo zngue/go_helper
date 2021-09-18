@@ -75,7 +75,12 @@ func DataWithErr(ctx *gin.Context,err error,data interface{},fns ...ResponseFn) 
 		fnArr=append(fnArr, fns...)
 		Error(ctx,fnArr...)
 	}else{
-		Success(ctx,fns...)
+		var fnArr []ResponseFn
+		if data!=nil {
+			fnArr=append(fnArr, Data(data))
+			fnArr=append(fnArr, fns...)
+		}
+		Success(ctx,fnArr...)
 	}
 }
 
