@@ -5,8 +5,10 @@ import "github.com/gin-gonic/gin"
 var (
 	SuccessCode = 200
 	ErrorCode = 100
+	ErrorParameter = 422
 	SuccessMsg="success"
 	ErrorMsg="error"
+	ParameterMsg="参数错误"
 )
 
 
@@ -65,6 +67,31 @@ func Success(ctx *gin.Context, fns ...ResponseFn) {
 		}
 	}
 	ctx.JSON(200, success)
+}
+func DataWithErr(ctx *gin.Context,err error,data interface{},fns ...ResponseFn) {
+	if err!=nil {
+		var fnArr []ResponseFn
+		fnArr=append(fnArr, Err(err))
+		fnArr=append(fnArr, fns...)
+		Error(ctx,fnArr...)
+	}else{
+		Success(ctx,fns...)
+	}
+}
+
+// ParameterError /*
+func ParameterError(ctx *gin.Context, fns ...ResponseFn) {
+	var err = &Response{
+		Code: ErrorParameter,
+		Msg:  ParameterMsg,
+		Data: nil,
+	}
+	if len(fns) > 0 {
+		for _, fn := range fns {
+			err = fn(err)
+		}
+	}
+	ctx.JSON(200, err)
 }
 
 // Error /*
