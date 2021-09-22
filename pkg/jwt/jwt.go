@@ -12,20 +12,6 @@ const (
 	ErrorreasonLoginOutTime = "登录过期，请重新登录"
 )
 
-var (
-	secret     string // 加盐
-	expireTime int    // token有效期
-	issuer     string
-	subject    string
-)
-
-func init() {
-	secret = viper.GetString("jwtConfig.Secret")
-	expireTime = viper.GetInt("jwtConfig.ExpireTime")
-	issuer = viper.GetString("jwtConfig.Issuer")
-	subject = viper.GetString("jwtConfig.Subject")
-}
-
 type AuthJwt struct {
 }
 type Claims struct {
@@ -38,9 +24,9 @@ func (*AuthJwt) CreateClaims(data interface{}) (claims *Claims) {
 		UserInfo: data,
 		StandardClaims: jwt.StandardClaims{
 			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: time.Now().Add(time.Second * time.Duration(expireTime)).Unix(),
-			Issuer:    issuer,
-			Subject:   subject,
+			ExpiresAt: time.Now().Add(time.Second * time.Duration(viper.GetInt("jwtConfig.ExpireTime"))).Unix(),
+			Issuer:    viper.GetString("jwtConfig.Issuer"),
+			Subject:   viper.GetString("jwtConfig.Subject"),
 		},
 	}
 	return
@@ -52,7 +38,8 @@ func (j *AuthJwt) CreateToken(data interface{}) (token string, err error) {
 }
 func (*AuthJwt) GetToken(claims *Claims) (signedToken string, err error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err = token.SignedString([]byte(secret))
+	secrets := viper.GetString("jwtConfig.Secret")
+	signedToken, err = token.SignedString([]byte(secrets))
 	if err != nil {
 		err = errors.New(ErrorreasonServerbusy)
 	}
@@ -60,7 +47,8 @@ func (*AuthJwt) GetToken(claims *Claims) (signedToken string, err error) {
 }
 func (*AuthJwt) Parse(strToken string) (claims *Claims, err error) {
 	token, errs := jwt.ParseWithClaims(strToken, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(secret), nil
+		secrets := viper.GetString("jwtConfig.Secret")
+		return []byte(secrets), nil
 	})
 	if errs != nil {
 		return nil, errs
