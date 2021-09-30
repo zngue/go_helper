@@ -57,6 +57,12 @@ func FnRouter(fun ...pkg.RouterFun) RunLoadFn {
 		return load
 	}
 }
+func IsRegisterCenter(c bool) RunLoadFn {
+	return func(load *RunLoad) *RunLoad {
+		load.IsRegisterCenter = c
+		return load
+	}
+}
 
 func ServiceRegister() {
 	port := viper.GetString("AppPort")
