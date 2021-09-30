@@ -120,7 +120,6 @@ func CommonGinRun(runArr ...RunLoadFn) {
 			ServiceRegister() //自动注册服务
 		}
 	}()
-
 	port := viper.GetString("AppPort")
 	ginRun, err := pkg.GinRun(port, load.FnRouter...)
 	if err != nil {
