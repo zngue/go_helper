@@ -63,7 +63,16 @@ func IsRegisterCenter(c bool) RunLoadFn {
 		return load
 	}
 }
+func MicHttp(Method, registerCenter string, data map[string]interface{}) (string, error) {
+	url := viper.GetString("micro.serviceList."+registerCenter) + "/register"
+	httpMicro := &http.HttpMico{
+		Method: Method,
+		Url:    url,
+		Param:  data,
+	}
+	return httpMicro.Response()
 
+}
 func ServiceRegister() {
 	port := viper.GetString("AppPort")
 	title := viper.GetString("AppTitle")
@@ -75,18 +84,12 @@ func ServiceRegister() {
 	if port == "6006" {
 		return
 	}
-	httpMicro := &http.HttpMico{
-		Method:    http.GET,
-		ServiceId: "registerCenter",
-		EndPoint:  "register",
-		Param: map[string]interface{}{
-			"port":  port,
-			"title": title,
-			"host":  host,
-			"name":  name,
-		},
-	}
-	httpMicro.DoRequest()
+	MicHttp(http.POST, "registerCenter", map[string]interface{}{
+		"port":  port,
+		"title": title,
+		"host":  host,
+		"name":  name,
+	})
 }
 
 func CommonGinRun(runArr ...RunLoadFn) {
