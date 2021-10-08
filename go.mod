@@ -13,6 +13,7 @@ require (
 	github.com/onsi/gomega v1.14.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/silenceper/wechat/v2 v2.0.9
+	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cast v1.3.1
 	github.com/spf13/viper v1.7.1
 	github.com/wechatpay-apiv3/wechatpay-go v0.2.7

@@ -8,22 +8,31 @@ import (
 	"github.com/zngue/go_helper/pkg/http"
 	"github.com/zngue/go_helper/pkg/sign_chan"
 	"gorm.io/gorm"
+	"strings"
 )
 
 type RunLoad struct {
 	MysqlLoad        bool
 	MysqlOption      []gorm.Option
+	MysqlCoonn		MysqlConnet
 	RedisLoad        bool
 	ConfigLoad       bool
 	ConfigOption     []pkg.ConfigFn
 	FnRouter         []pkg.RouterFun
 	IsRegisterCenter bool
 }
+type MysqlConnet func(db *gorm.DB)
 type RunLoadFn func(load *RunLoad) *RunLoad
 
 func MysqlLoad(mysql bool) RunLoadFn {
 	return func(load *RunLoad) *RunLoad {
 		load.MysqlLoad = mysql
+		return load
+	}
+}
+func MysqlConn(conn  MysqlConnet) RunLoadFn {
+	return func(load *RunLoad) *RunLoad {
+		load.MysqlCoonn=conn
 		return load
 	}
 }
@@ -63,6 +72,22 @@ func IsRegisterCenter(c bool) RunLoadFn {
 		return load
 	}
 }
+
+// MicHttp 服务请求
+func MicHttp(Method, serverName string, EndPoint string, data map[string]interface{}) (string, error) {
+	url := viper.GetString("micro.serviceList."+serverName) + "/"+EndPoint
+	if strings.Index(url, "http") < 0 {
+		url = "http://" + url
+	}
+	httpMicro := &http.HttpMico{
+		Method: Method,
+		Url:    url,
+		Param:  data,
+	}
+	return httpMicro.Response()
+
+}
+/*
 func MicHttp(Method, registerCenter string, data map[string]interface{}) (string, error) {
 	url := viper.GetString("micro.serviceList."+registerCenter) + "/register"
 	httpMicro := &http.HttpMico{
@@ -72,7 +97,9 @@ func MicHttp(Method, registerCenter string, data map[string]interface{}) (string
 	}
 	return httpMicro.Response()
 
-}
+}*/
+
+// ServiceRegister 注册中心服务
 func ServiceRegister() {
 	port := viper.GetString("AppPort")
 	title := viper.GetString("AppTitle")
@@ -81,17 +108,16 @@ func ServiceRegister() {
 	if len(port) == 0 || len(title) == 0 || len(host) == 0 || len(name) == 0 {
 		return
 	}
-	if port == "6006" {
-		return
+	if port != "6006" { //中心化注册
+		MicHttp(http.POST, "registerCenter","register", map[string]interface{}{
+			"port":  port,
+			"title": title,
+			"host":  host,
+			"name":  name,
+		})
 	}
-	MicHttp(http.POST, "registerCenter", map[string]interface{}{
-		"port":  port,
-		"title": title,
-		"host":  host,
-		"name":  name,
-	})
-}
 
+}
 func CommonGinRun(runArr ...RunLoadFn) {
 	load := &RunLoad{
 		MysqlLoad:        true,
@@ -112,9 +138,13 @@ func CommonGinRun(runArr ...RunLoadFn) {
 		}
 	}
 	if load.MysqlLoad {
-		if _, err := pkg.NewMysql(load.MysqlOption...); err != nil {
+		if mysqlConn, err := pkg.NewMysql(load.MysqlOption...); err != nil {
 			logrus.Fatal(err)
 			return
+		}else{
+			if load.MysqlCoonn!=nil {
+				load.MysqlCoonn(mysqlConn)
+			}
 		}
 	}
 	if load.RedisLoad {
