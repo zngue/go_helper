@@ -14,16 +14,14 @@ import (
 )
 
 type WechatClient interface {
-
 	V3Client() (*wechat3.ClientV3, error)
 	CommonWechat() *commonWechat.Wechat
-	V2Client() (*wechat.Client,error)
+	V2Client() (*wechat.Client, error)
 	OfficialAccount() *officialaccount.OfficialAccount
 	DecryptToString(resource *Resource) (certificate string, err error)
-
 }
 type WechatService struct {
-	WechatPay WehcatConfig
+	WechatPay *WehcatConfig
 }
 
 func (s *WechatService) DecryptToString(resource *Resource) (certificate string, err error) {
@@ -40,24 +38,24 @@ func (s *WechatService) ApiclientKey() (string, error) {
 }
 func (s *WechatService) V3Client() (*wechat3.ClientV3, error) {
 	var (
-		err error
+		err             error
 		privateKeyBytes string
 	)
-	if v3client!=nil {
+	if v3client != nil {
 		return v3client, nil
 	}
 	privateKeyBytes, err = s.ApiclientKey()
 	if err != nil {
 		return nil, err
 	}
-	v3client,err=wechat3.NewClientV3(s.WechatPay.MchId, s.WechatPay.SerialNo, s.WechatPay.ApiKey3, privateKeyBytes)
-	return v3client,err
+	v3client, err = wechat3.NewClientV3(s.WechatPay.MchId, s.WechatPay.SerialNo, s.WechatPay.ApiKey3, privateKeyBytes)
+	return v3client, err
 
 }
-func (s *WechatService) V2Client() (*wechat.Client,error) {
+func (s *WechatService) V2Client() (*wechat.Client, error) {
 	var err error
-	if v2client!=nil {
-		return v2client,err
+	if v2client != nil {
+		return v2client, err
 	}
 	v2client = wechat.NewClient(s.WechatPay.AppId, s.WechatPay.MchId, s.WechatPay.ApiKey3, s.WechatPay.IsProd)
 	if err = v2client.AddCertPemFilePath(s.WechatPay.ApiclientCerPath, s.WechatPay.ApiclientKeyPath); err != nil {
@@ -66,7 +64,7 @@ func (s *WechatService) V2Client() (*wechat.Client,error) {
 	if err = v2client.AddCertPkcs12FilePath(s.WechatPay.ApiclientCer12Path); err != nil {
 		return nil, err
 	}
-	return v2client,err
+	return v2client, err
 
 }
 func (s *WechatService) CommonWechat() *commonWechat.Wechat {
@@ -87,34 +85,33 @@ func (s *WechatService) OfficialAccount() *officialaccount.OfficialAccount {
 
 func WechatConfig() *WehcatConfig {
 	wen := &WehcatConfig{
-		AppId:            viper.GetString("wechat.base.appid"),
-		Appkey:           viper.GetString("wechat.base.appsecret"),
-		MchId:            viper.GetString("wechat.pay.mchid"),
-		SerialNo:         viper.GetString("wechat.pay.serialNo"),
-		ApiKey3:          viper.GetString("wechat.pay.apiKey3"),
-		ApiclientKeyPath: viper.GetString("wechat.pay.apiclientKeyPath"),
-		ApiclientCerPath: viper.GetString("wechat.pay.apiclientCerPath"),
+		AppId:              viper.GetString("wechat.base.appid"),
+		Appkey:             viper.GetString("wechat.base.appsecret"),
+		MchId:              viper.GetString("wechat.pay.mchid"),
+		SerialNo:           viper.GetString("wechat.pay.serialNo"),
+		ApiKey3:            viper.GetString("wechat.pay.apiKey3"),
+		ApiclientKeyPath:   viper.GetString("wechat.pay.apiclientKeyPath"),
+		ApiclientCerPath:   viper.GetString("wechat.pay.apiclientCerPath"),
 		ApiclientCer12Path: viper.GetString("wechat.pay.apiclientCer12Path"),
-		IsProd:           viper.GetBool("wechat.pay.isProd"),
-		NotifyUrl:        viper.GetString("wechat.pay.notifyUrl"),
+		IsProd:             viper.GetBool("wechat.pay.isProd"),
+		NotifyUrl:          viper.GetString("wechat.pay.notifyUrl"),
 	}
 	return wen
 }
 
-type WechatConfigInit  func () *WehcatConfig
+type WechatConfigInit func() *WehcatConfig
 
-func WechatConfigInitSet(initSet WechatConfigInit)  {
-	wepay=initSet()
+func WechatConfigInitSet(initSet WechatConfigInit) {
+	wepay = initSet()
 }
-
 
 // NewWechatClient /*
 func NewWechatClient() WechatClient {
-	if wepay==nil {
+	if wepay == nil {
 		wepay = WechatConfig()
 	}
-	if wechatClient==nil {
-		 wechatClient=new(WechatService)
+	if wechatClient == nil {
+		wechatClient = new(WechatService)
 
 	}
 	return wechatClient
