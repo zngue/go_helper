@@ -21,16 +21,16 @@ type WechatClient interface {
 	DecryptToString(resource *Resource) (certificate string, err error)
 }
 type WechatService struct {
-	WechatPay *WehcatConfig
+	WehcatConfig *WehcatConfig
 }
 
 func (s *WechatService) DecryptToString(resource *Resource) (certificate string, err error) {
-	return utils.DecryptAES256GCM(s.WechatPay.ApiKey3, resource.AssociatedData, resource.Nonce, resource.Ciphertext)
+	return utils.DecryptAES256GCM(s.WehcatConfig.ApiKey3, resource.AssociatedData, resource.Nonce, resource.Ciphertext)
 }
 func (s *WechatService) ApiclientKey() (string, error) {
-	paths := s.WechatPay.ApiclientKeyPath
+	paths := s.WehcatConfig.ApiclientKeyPath
 	fmt.Println(wepay, paths)
-	privateKeyBytes, keypathErr := ioutil.ReadFile(s.WechatPay.ApiclientKeyPath)
+	privateKeyBytes, keypathErr := ioutil.ReadFile(s.WehcatConfig.ApiclientKeyPath)
 	if keypathErr != nil {
 		return "", keypathErr
 	}
@@ -48,7 +48,7 @@ func (s *WechatService) V3Client() (*wechat3.ClientV3, error) {
 	if err != nil {
 		return nil, err
 	}
-	v3client, err = wechat3.NewClientV3(s.WechatPay.MchId, s.WechatPay.SerialNo, s.WechatPay.ApiKey3, privateKeyBytes)
+	v3client, err = wechat3.NewClientV3(s.WehcatConfig.MchId, s.WehcatConfig.SerialNo, s.WehcatConfig.ApiKey3, privateKeyBytes)
 	return v3client, err
 
 }
@@ -57,11 +57,11 @@ func (s *WechatService) V2Client() (*wechat.Client, error) {
 	if v2client != nil {
 		return v2client, err
 	}
-	v2client = wechat.NewClient(s.WechatPay.AppId, s.WechatPay.MchId, s.WechatPay.ApiKey3, s.WechatPay.IsProd)
-	if err = v2client.AddCertPemFilePath(s.WechatPay.ApiclientCerPath, s.WechatPay.ApiclientKeyPath); err != nil {
+	v2client = wechat.NewClient(s.WehcatConfig.AppId, s.WehcatConfig.MchId, s.WehcatConfig.ApiKey3, s.WehcatConfig.IsProd)
+	if err = v2client.AddCertPemFilePath(s.WehcatConfig.ApiclientCerPath, s.WehcatConfig.ApiclientKeyPath); err != nil {
 		return nil, err
 	}
-	if err = v2client.AddCertPkcs12FilePath(s.WechatPay.ApiclientCer12Path); err != nil {
+	if err = v2client.AddCertPkcs12FilePath(s.WehcatConfig.ApiclientCer12Path); err != nil {
 		return nil, err
 	}
 	return v2client, err
@@ -75,8 +75,8 @@ func (s *WechatService) OfficialAccount() *officialaccount.OfficialAccount {
 	newWechat := commonWechat.NewWechat()
 	memory := cache.NewMemory()
 	c := config.Config{
-		AppID:     s.WechatPay.AppId,
-		AppSecret: s.WechatPay.Appkey,
+		AppID:     s.WehcatConfig.AppId,
+		AppSecret: s.WehcatConfig.Appkey,
 		Token:     "weixin",
 		Cache:     memory,
 	}
