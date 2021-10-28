@@ -8,16 +8,26 @@ import (
 	"time"
 )
 
+type UserInfoToken struct {
+	ID int
+	Name string
+	Password string
+	Age int
+	Sex int
+
+}
 func TestCreateJwt(t *testing.T) {
 
 	config.NewConfig(config.Path("eg/conf"))
 
 	j := new(jwt.AuthJwt)
 
-	token, err := j.CreateToken(map[string]string{
-		"username": "zhangsan",
-		"age":      "56",
-		"password": "123456",
+	token, err := j.CreateToken(UserInfoToken{
+		ID: 10,
+		Name: "zhangsan",
+		Password: "13230",
+		Age: 12,
+		Sex: 1,
 	})
 	parse, err := j.Parse(token)
 	unixTime := time.Now().Unix()
@@ -25,8 +35,10 @@ func TestCreateJwt(t *testing.T) {
 		fmt.Println("expire")
 	}
 
-	if user, ok := parse.UserInfo.(map[string]string); ok {
+	if user, ok := parse.UserInfo.(map[string]interface{}); ok {
 		fmt.Println(user)
+	}else {
+		fmt.Println(ok)
 	}
 	fmt.Println(token, err, parse, unixTime)
 

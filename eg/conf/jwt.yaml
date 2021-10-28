@@ -1,5 +1,5 @@
 jwtConfig:
   Secret: zngue
-  ExpireTime:
+  ExpireTime: 15856
   Issuer:
   Subject:

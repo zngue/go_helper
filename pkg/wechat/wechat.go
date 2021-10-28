@@ -23,15 +23,16 @@ type WechatClient interface {
 
 }
 type WechatService struct {
+	WechatPay WehcatConfig
 }
 
 func (s *WechatService) DecryptToString(resource *Resource) (certificate string, err error) {
-	return utils.DecryptAES256GCM(wepay.ApiKey3, resource.AssociatedData, resource.Nonce, resource.Ciphertext)
+	return utils.DecryptAES256GCM(s.WechatPay.ApiKey3, resource.AssociatedData, resource.Nonce, resource.Ciphertext)
 }
 func (s *WechatService) ApiclientKey() (string, error) {
-	paths := wepay.ApiclientKeyPath
+	paths := s.WechatPay.ApiclientKeyPath
 	fmt.Println(wepay, paths)
-	privateKeyBytes, keypathErr := ioutil.ReadFile(wepay.ApiclientKeyPath)
+	privateKeyBytes, keypathErr := ioutil.ReadFile(s.WechatPay.ApiclientKeyPath)
 	if keypathErr != nil {
 		return "", keypathErr
 	}
@@ -49,7 +50,7 @@ func (s *WechatService) V3Client() (*wechat3.ClientV3, error) {
 	if err != nil {
 		return nil, err
 	}
-	v3client,err=wechat3.NewClientV3(wepay.MchId, wepay.SerialNo, wepay.ApiKey3, privateKeyBytes)
+	v3client,err=wechat3.NewClientV3(s.WechatPay.MchId, s.WechatPay.SerialNo, s.WechatPay.ApiKey3, privateKeyBytes)
 	return v3client,err
 
 }
@@ -58,11 +59,11 @@ func (s *WechatService) V2Client() (*wechat.Client,error) {
 	if v2client!=nil {
 		return v2client,err
 	}
-	v2client = wechat.NewClient(wepay.AppId, wepay.MchId, wepay.ApiKey3, wepay.IsProd)
-	if err = v2client.AddCertPemFilePath(wepay.ApiclientCerPath, wepay.ApiclientKeyPath); err != nil {
+	v2client = wechat.NewClient(s.WechatPay.AppId, s.WechatPay.MchId, s.WechatPay.ApiKey3, s.WechatPay.IsProd)
+	if err = v2client.AddCertPemFilePath(s.WechatPay.ApiclientCerPath, s.WechatPay.ApiclientKeyPath); err != nil {
 		return nil, err
 	}
-	if err = v2client.AddCertPkcs12FilePath(wepay.ApiclientCer12Path); err != nil {
+	if err = v2client.AddCertPkcs12FilePath(s.WechatPay.ApiclientCer12Path); err != nil {
 		return nil, err
 	}
 	return v2client,err
@@ -76,8 +77,8 @@ func (s *WechatService) OfficialAccount() *officialaccount.OfficialAccount {
 	newWechat := commonWechat.NewWechat()
 	memory := cache.NewMemory()
 	c := config.Config{
-		AppID:     wepay.AppId,
-		AppSecret: wepay.Appkey,
+		AppID:     s.WechatPay.AppId,
+		AppSecret: s.WechatPay.Appkey,
 		Token:     "weixin",
 		Cache:     memory,
 	}
@@ -99,6 +100,14 @@ func WechatConfig() *WehcatConfig {
 	}
 	return wen
 }
+
+type WechatConfigInit  func () *WehcatConfig
+
+func WechatConfigInitSet(initSet WechatConfigInit)  {
+	wepay=initSet()
+}
+
+
 // NewWechatClient /*
 func NewWechatClient() WechatClient {
 	if wepay==nil {
@@ -106,6 +115,7 @@ func NewWechatClient() WechatClient {
 	}
 	if wechatClient==nil {
 		 wechatClient=new(WechatService)
+
 	}
 	return wechatClient
 }
