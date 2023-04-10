@@ -36,6 +36,7 @@ type ListRequest struct {
 	*Page
 	Where map[string]any
 	Order []string
+	Filed any
 	Fn    func(db *gorm.DB) *gorm.DB
 }
 
@@ -47,6 +48,9 @@ func (d *DBResource[T]) ListPage(request *ListRequest) (dataList []*T, count int
 	}
 	if request.Order != nil { //排序
 		db = d.Order(request.Order, db)
+	}
+	if request.Filed != nil { //字段
+		db = db.Select(request.Filed)
 	}
 	if request.Page != nil && request.Page.Page != -1 { //-1不分页
 		err = db.Count(&count).Error
