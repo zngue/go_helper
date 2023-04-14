@@ -86,32 +86,66 @@ func (d *Resource[T]) Del(where map[string]any) (err error) {
 // Content 查询单条数据
 func (d *Resource[T]) Content(request *Request) (data *T, err error) {
 	db := d.db.Model(d.Model)
-	db = d.Where(request.Where, db)
 	db = d.Order(request.Order, db)
-	if request.Fn != nil {
-		db = request.Fn(db)
-	}
-	if request.Select != nil {
-		db = db.Select(request.Select)
+	if request.Common != nil {
+		if request.Common.Where != nil {
+			db = d.Where(request.Common.Where, db)
+		}
+		if request.Common.Fn != nil {
+			db = request.Common.Fn(db)
+		}
+		if request.Common.Select != nil {
+			db = db.Select(request.Common.Select)
+		}
+		if request.Common.Order != nil {
+			db = d.Order(request.Common.Order, db)
+		}
+		//Fn 不为nil
+		if request.Common.Fn != nil {
+			db = request.Fn(db)
+		}
 	}
 	err = db.First(data).Error
 	return
 }
 
+// Helper request *Request
+func (d *Resource[T]) Helper(db *gorm.DB, request *Request) *gorm.DB {
+	if request.Common != nil {
+		if request.Common.Where != nil {
+			db = d.Where(request.Common.Where, db)
+		}
+		if request.Common.Fn != nil {
+			db = request.Common.Fn(db)
+		}
+		if request.Common.Select != nil {
+			db = db.Select(request.Common.Select)
+		}
+		if request.Common.Order != nil {
+			db = d.Order(request.Common.Order, db)
+		}
+		//Fn 不为nil
+		if request.Common.Fn != nil {
+			db = request.Fn(db)
+		}
+	}
+	//分页设置
+	if request.IsSingle { //单条数据
+		return db
+	}
+	if request.Page != nil {
+		if request.Page.Page != -1 {
+			db = request.Page.PageLimit(db)
+		}
+	}
+	return db
+
+}
+
 // List 查询多条数据
 func (d *Resource[T]) List(request *Request) (data []*T, err error) {
 	db := d.db.Model(d.Model)
-	db = d.Where(request.Where, db)
-	db = d.Order(request.Order, db)
-	if request.Page != nil {
-		db = request.Page.PageLimit(db)
-	}
-	if request.Select != nil {
-		db = db.Select(request.Select)
-	}
-	if request.Fn != nil {
-		db = request.Fn(db)
-	}
+	db = d.Helper(db, request)
 	err = db.Find(&data).Error
 	if err == gorm.ErrRecordNotFound {
 		err = nil
@@ -122,14 +156,7 @@ func (d *Resource[T]) List(request *Request) (data []*T, err error) {
 // ListPage 查询多条数据 带分页 count
 func (d *Resource[T]) ListPage(request *Request) (dataList []*T, count int64, err error) {
 	db := d.db.Model(d.Model)
-	db = d.Where(request.Where, db)
-	db = d.Order(request.Order, db)
-	if request.Fn != nil {
-		db = request.Fn(db)
-	}
-	if request.Select != nil {
-		db = db.Select(request.Select)
-	}
+	db = d.Helper(db, request)
 	if request.Page != nil { // 分页
 		if request.Page.Page != -1 { // 不查询全部的时候统计总数
 			err = db.Count(&count).Error
@@ -137,7 +164,6 @@ func (d *Resource[T]) ListPage(request *Request) (dataList []*T, count int64, er
 				return
 			}
 		}
-		db = request.Page.PageLimit(db) // 分页
 	}
 	err = db.Find(&dataList).Error
 	if err == gorm.ErrRecordNotFound { // 没有数据的时候不报错
@@ -147,9 +173,9 @@ func (d *Resource[T]) ListPage(request *Request) (dataList []*T, count int64, er
 }
 
 // Count 查询总数
-func (d *Resource[T]) Count(where map[string]any) (count int64, err error) {
+func (d *Resource[T]) Count(request *Request) (count int64, err error) {
 	db := d.db.Model(d.Model)
-	db = d.Where(where, db)
+	db = d.Helper(db, request)
 	err = db.Count(&count).Error
 	return
 }
@@ -157,26 +183,7 @@ func (d *Resource[T]) Count(where map[string]any) (count int64, err error) {
 // Conn 获取数据库连接
 func (d *Resource[T]) Conn(data *Request) *gorm.DB {
 	db := d.db.Model(d.Model)
-	if data.Common != nil {
-		if data.Common.Where != nil {
-			db = d.Where(data.Common.Where, db)
-		}
-		if data.Common.Order != nil {
-			db = d.Order(data.Common.Order, db)
-		}
-		if data.Common.Select != nil {
-			db = db.Select(data.Common.Select)
-		}
-		if data.Common.Fn != nil {
-			db = data.Common.Fn(db)
-		}
-	}
-	if data.Fn != nil {
-		db = data.Fn(db)
-	}
-	if data.Page != nil {
-		db = data.Page.PageLimit(db)
-	}
+	db = d.Helper(db, data)
 	return db
 }
 
@@ -191,7 +198,7 @@ type Common struct {
 type Request struct {
 	*Common
 	*Page
-	Fn DBFn
+	IsSingle bool
 }
 
 func Data[T any]() *Resource[T] {
