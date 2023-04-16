@@ -1,13 +1,18 @@
 package db_resources
 
 import (
+	"fmt"
 	"github.com/zngue/go_helper/pkg"
 	"gorm.io/gorm"
 )
 
+// IsUpdateCache 是否更新缓存
+var IsUpdateCache = true
+
 type Resource[T any] struct {
-	db    *gorm.DB
-	Model *T
+	db          *gorm.DB
+	Model       *T
+	CacheOption *CacheOption
 }
 type Page struct {
 	Page     int `form:"page"`
@@ -43,12 +48,14 @@ func (d *Resource[T]) Update(where, data map[string]any) (err error) {
 	db := d.db.Model(d.Model)
 	db = d.Where(where, db)
 	err = db.Updates(data).Error
+	IsUpdateCache = true
 	return
 }
 
 // Create 新建数据
 func (d *Resource[T]) Create(data *T) (err error) {
 	err = d.db.Model(d.Model).Create(&data).Error
+	IsUpdateCache = true
 	return
 }
 
@@ -77,6 +84,42 @@ func (d *Resource[T]) Del(where map[string]any) (err error) {
 	db := d.db.Model(d.Model)
 	db = d.Where(where, db)
 	err = db.Delete(d.Model).Error
+	IsUpdateCache = true
+	return
+}
+
+// ListCache 列表缓存
+func (d *Resource[T]) ListCache(request *Request) (data []*T, err error) {
+	if d.CacheOption != nil {
+		if IsUpdateCache {
+			IsUpdateCache = false
+			pkg.RedisConn.Del(d.CacheOption.Key)
+		}
+		if request.Page != nil && request.Page.Page != -1 {
+			d.CacheOption.Hash = &HashOption{
+				Field: fmt.Sprintf("%d", request.Page.Page),
+			}
+		}
+		d.CacheOption.CacheFn = func() (err error, i any) {
+			i, err = d.List(request)
+			return
+		}
+		err = DataCache(d.CacheOption, &data)
+	} else {
+		return d.List(request)
+	}
+	return
+}
+
+// ContentCache 单条数据缓存
+func (d *Resource[T]) ContentCache(request *Request) (data *T, err error) {
+	if d.CacheOption != nil {
+		d.CacheOption.CacheFn = func() (err error, i any) {
+			i, err = d.Content(request)
+			return
+		}
+		err = DataCache(d.CacheOption, &data)
+	}
 	return
 }
 
@@ -150,6 +193,47 @@ func (d *Resource[T]) List(request *Request) (data []*T, err error) {
 	return
 }
 
+type ListData[T any] struct {
+	Count int64
+	Data  []*T
+}
+
+// ListPageCache 查询多条数据 带分页 count
+func (d *Resource[T]) ListPageCache(request *Request) (dataList []*T, count int64, err error) {
+	listCacheData := new(ListData[T])
+	if d.CacheOption != nil {
+		if IsUpdateCache {
+			IsUpdateCache = false
+			pkg.RedisConn.Del(d.CacheOption.Key)
+		}
+		if request.Page != nil && request.Page.Page != -1 {
+			d.CacheOption.Hash = &HashOption{
+				Field: fmt.Sprintf("%d", request.Page.Page),
+			}
+		}
+		d.CacheOption.CacheFn = func() (cacheErr error, i any) {
+			dataList, count, cacheErr = d.ListPage(request)
+			if cacheErr != nil {
+				return
+			}
+			listCacheData = &ListData[T]{
+				Count: count,
+				Data:  dataList,
+			}
+			return err, dataList
+		}
+		err = DataCache(d.CacheOption, &listCacheData)
+		if err != nil {
+			return
+		}
+		dataList = listCacheData.Data
+		count = listCacheData.Count
+	} else {
+		return d.ListPage(request)
+	}
+	return
+}
+
 // ListPage 查询多条数据 带分页 count
 func (d *Resource[T]) ListPage(request *Request) (dataList []*T, count int64, err error) {
 	db := d.db.Model(d.Model)
@@ -184,6 +268,50 @@ func (d *Resource[T]) Conn(data *Request) *gorm.DB {
 	return db
 }
 
+// Data 数据
 func Data[T any]() *Resource[T] {
 	return NewResource[T](pkg.MysqlConn)
+}
+
+type DataOption struct {
+	Request     *Request
+	CacheOption *CacheOption
+	DB          *gorm.DB
+	IsCache     bool
+}
+
+type DataOptionFn func(option *DataOption) *DataOption
+
+// DataWithCacheOption 设置缓存
+func DataWithCacheOption(cacheOption *CacheOption) DataOptionFn {
+	return func(option *DataOption) *DataOption {
+		option.CacheOption = cacheOption
+		return option
+	}
+}
+
+// DataWithDB 设置数据库连接
+func DataWithDB(db *gorm.DB) DataOptionFn {
+	return func(option *DataOption) *DataOption {
+		option.DB = db
+		return option
+	}
+}
+func DataInit[T any](fns ...DataOptionFn) *Resource[T] {
+	option := new(DataOption)
+	if fns != nil {
+		for _, fn := range fns {
+			option = fn(option)
+		}
+	}
+	model := new(T)
+	resources := new(Resource[T])
+	if option.DB != nil {
+		resources.db = option.DB
+	} else {
+		resources.db = pkg.MysqlConn
+	}
+	resources.Model = model
+	resources.CacheOption = option.CacheOption
+	return resources
 }

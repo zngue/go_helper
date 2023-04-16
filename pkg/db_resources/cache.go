@@ -7,10 +7,16 @@ import (
 )
 
 type CacheOptionFn func(option *CacheOption) *CacheOption
+type HashOption struct {
+	Field string
+	Value any
+}
 type CacheOption struct {
 	Key        string // 缓存key
 	ExpireTime time.Duration
-	CacheFn    CacheFn // 缓存数据FN
+	CacheFn    CacheFn     // 缓存数据FN
+	Hash       *HashOption // 缓存hash
+	Data       any
 }
 
 // CacheWithKey 设置缓存 Key
@@ -38,6 +44,17 @@ func CacheWithFn(fn CacheFn) CacheOptionFn {
 	}
 }
 
+// CacheWithHash 设置缓存hash
+func CacheWithHash(field string, value any) CacheOptionFn {
+	return func(option *CacheOption) *CacheOption {
+		option.Hash = &HashOption{
+			Field: field,
+			Value: value,
+		}
+		return option
+	}
+}
+
 // NewCacheOption 创建缓存配置
 func NewCacheOption(fns ...CacheOptionFn) *CacheOption {
 	option := &CacheOption{}
@@ -48,19 +65,27 @@ func NewCacheOption(fns ...CacheOptionFn) *CacheOption {
 }
 
 func DataCache(option *CacheOption, v any) error {
-	return CacheCommon(option.Key, v, option.ExpireTime, option.CacheFn)
+	return CacheCommon(option, v)
 }
 
 type CacheFn func() (err error, i any)
 
-func CacheCommon(key string, v any, expireTime time.Duration, fn CacheFn) (err error) {
+func CacheHashMap() {
+
+}
+
+func CacheCommon(option *CacheOption, v any) (err error) {
 	var (
 		redisValue string
-		data       interface{}
+		data       any
 		marshal    []byte
 	)
-	redisValue, _ = pkg.RedisConn.Get(key).Result()
 
+	if option.Hash != nil {
+		redisValue, _ = pkg.RedisConn.HGet(option.Key, option.Hash.Field).Result()
+	} else {
+		redisValue, _ = pkg.RedisConn.Get(option.Key).Result()
+	}
 	if redisValue != "" {
 		err = json.Unmarshal([]byte(redisValue), v)
 		if err != nil {
@@ -68,17 +93,24 @@ func CacheCommon(key string, v any, expireTime time.Duration, fn CacheFn) (err e
 		}
 		return
 	}
-	err, data = fn()
-	if err != nil {
-		return
+
+	if option.CacheFn != nil {
+		err, data = option.CacheFn()
+		if err != nil {
+			return
+		}
+	} else {
+		data = option.Data
 	}
 	marshal, err = json.Marshal(data)
 	if err != nil {
 		return
 	}
-	err = pkg.RedisConn.Set(key, string(marshal), expireTime).Err()
-	if err != nil {
-		return
+	if option.Hash != nil {
+		err = pkg.RedisConn.HSet(option.Key, option.Hash.Field, string(marshal)).Err()
+		pkg.RedisConn.Expire(option.Key, option.ExpireTime)
+	} else {
+		err = pkg.RedisConn.Set(option.Key, string(marshal), option.ExpireTime).Err()
 	}
 	return
 }
