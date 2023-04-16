@@ -15,7 +15,6 @@ type Page struct {
 	Page     int `form:"page"`
 	PageSize int `form:"pageSize"`
 }
-type DBFn func(db *gorm.DB) *gorm.DB
 
 // PageLimit 写个分页查询的结构体
 func (p *Page) PageLimit(db *gorm.DB) (tx *gorm.DB) {
@@ -185,20 +184,6 @@ func (d *Resource[T]) Conn(data *Request) *gorm.DB {
 	db := d.db.Model(d.Model)
 	db = d.Helper(db, data)
 	return db
-}
-
-type Common struct {
-	Where  map[string]any
-	Order  []string
-	Select any
-	Fn     DBFn
-}
-
-// Request 查询多条数据
-type Request struct {
-	*Common
-	*Page
-	IsSingle bool
 }
 
 func Data[T any]() *Resource[T] {
