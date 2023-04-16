@@ -1,10 +1,8 @@
 package db_resources
 
 import (
-	"encoding/json"
 	"github.com/zngue/go_helper/pkg"
 	"gorm.io/gorm"
-	"time"
 )
 
 type Resource[T any] struct {
@@ -188,47 +186,4 @@ func (d *Resource[T]) Conn(data *Request) *gorm.DB {
 
 func Data[T any]() *Resource[T] {
 	return NewResource[T](pkg.MysqlConn)
-}
-
-type CacheOption struct {
-	// 缓存key
-	Key        string
-	ExpireTime time.Duration
-	// 缓存数据FN
-	CacheFn CacheFn
-}
-
-func DataCache(option *CacheOption, v any) error {
-	return CacheCommon(option.Key, v, option.ExpireTime, option.CacheFn)
-}
-
-type CacheFn func() (err error, i any)
-
-func CacheCommon(key string, v any, expireTime time.Duration, fn CacheFn) (err error) {
-	var (
-		redisValue string
-		data       interface{}
-	)
-	redisValue, _ = pkg.RedisConn.Get(key).Result()
-
-	if redisValue != "" {
-		err = json.Unmarshal([]byte(redisValue), v)
-		if err != nil {
-			return
-		}
-		return
-	}
-	err, data = fn()
-	if err != nil {
-		return
-	}
-	marshal, err := json.Marshal(data)
-	if err != nil {
-		return
-	}
-	err = pkg.RedisConn.Set(key, string(marshal), expireTime).Err()
-	if err != nil {
-		return
-	}
-	return
 }
