@@ -145,7 +145,7 @@ func (d *Resource[T]) Content(request *Request) (data *T, err error) {
 			db = request.Fn(db)
 		}
 	}
-	err = db.First(data).Error
+	err = db.First(&data).Error
 	return
 }
 
