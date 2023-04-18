@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=${1:-"v1.0.27"}
+version=${1:-"v1.0.29"}
 git tag -d "${version}"
 git push origin :refs/tags/"${version}"
 msg=${2:-"Release ${version}"}

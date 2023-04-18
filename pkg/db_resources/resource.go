@@ -115,7 +115,8 @@ func (d *Resource[T]) ListCache(request *Request) (data []*T, err error) {
 func (d *Resource[T]) ContentCache(request *Request) (data *T, err error) {
 	if d.CacheOption != nil {
 		d.CacheOption.CacheFn = func() (err error, i any) {
-			i, err = d.Content(request)
+			data, err = d.Content(request)
+			i = data
 			return
 		}
 		err = DataCache(d.CacheOption, &data)
