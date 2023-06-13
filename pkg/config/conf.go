@@ -21,12 +21,7 @@ var configDefult = Config{
 
 type ConfigFn func(config *Config) *Config
 
-/*
-*@Author Administrator
-*@Date 25/4/2021 14:36
-*@desc 配置默认读取应用名字
-
- */
+// Name /*
 func Name(name string) ConfigFn {
 	return func(config *Config) *Config {
 		config.Name = name
@@ -34,11 +29,7 @@ func Name(name string) ConfigFn {
 	}
 }
 
-/*
-*@Author Administrator
-*@Date 25/4/2021 14:39
-*@desc 配置路径
- */
+// Path /*
 func Path(path string) ConfigFn {
 	return func(config *Config) *Config {
 		config.Path = path
@@ -46,11 +37,7 @@ func Path(path string) ConfigFn {
 	}
 }
 
-/*
-*@Author Administrator
-*@Date 25/4/2021 14:40
-*@desc 文件后缀
- */
+// Ext /*
 func Ext(ext string) ConfigFn {
 	return func(config *Config) *Config {
 		config.Ext = ext
