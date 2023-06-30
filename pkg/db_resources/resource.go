@@ -174,11 +174,6 @@ func (d *Resource[T]) Helper(db *gorm.DB, request *Request) *gorm.DB {
 	if request.IsSingle { //单条数据
 		return db
 	}
-	if request.Page != nil {
-		if request.Page.Page != -1 {
-			db = request.Page.PageLimit(db)
-		}
-	}
 	return db
 
 }
@@ -187,6 +182,11 @@ func (d *Resource[T]) Helper(db *gorm.DB, request *Request) *gorm.DB {
 func (d *Resource[T]) List(request *Request) (data []*T, err error) {
 	db := d.db.Model(d.Model)
 	db = d.Helper(db, request)
+	if request.Page != nil {
+		if request.Page.Page != -1 {
+			db = request.Page.PageLimit(db)
+		}
+	}
 	err = db.Find(&data).Error
 	if err == gorm.ErrRecordNotFound {
 		err = nil
@@ -245,6 +245,9 @@ func (d *Resource[T]) ListPage(request *Request) (dataList []*T, count int64, er
 			if err != nil {
 				return
 			}
+		}
+		if request.Page.Page != -1 {
+			db = request.Page.PageLimit(db)
 		}
 	}
 	err = db.Find(&dataList).Error
