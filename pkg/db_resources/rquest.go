@@ -75,7 +75,9 @@ func RequestIsSingle(isSingle bool) RequestFn {
 func NewRequest(fns ...RequestFn) *Request {
 	common := new(Common)
 	request := new(Request)
+	page := new(Page)
 	request.Common = common
+	request.Page = page
 	if fns == nil {
 		return request
 	}
