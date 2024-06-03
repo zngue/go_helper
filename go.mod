@@ -15,7 +15,8 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/wechatpay-apiv3/wechatpay-go v0.2.7
 	github.com/xinliangnote/go-util v0.0.0-20200323134426-527984dc34bf
-	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
+	golang.org/x/exp v0.0.0-20240531132922-fd00a4e0eefc
+	golang.org/x/sync v0.7.0
 	google.golang.org/grpc v1.37.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/mysql v1.4.0
