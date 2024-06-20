@@ -49,6 +49,11 @@ type IListPage[RS any] interface {
 	ListPage(ctx *gin.Context) (items []*RS, count int64, err error)
 }
 
+type ListCallback[T, R, RS any] struct {
+	Fn           ListRequestFn[R]
+	ItemCallback ItemFn[T, RS]
+}
+
 func NewListPage[T, R, RS any](fn ListRequestFn[R], itemCallback ItemFn[T, RS]) IListPage[RS] {
 	var list = new(ListPage[T, R, RS])
 	list.callback = fn

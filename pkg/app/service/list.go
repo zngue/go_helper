@@ -10,9 +10,9 @@ type ListRequest[R any] struct {
 	Page *models.Page
 	Data *R
 }
-type ListRequestFn[R any] func(req *models.ListRequest, data *ListRequest[R])
+type ListRequestFn[R any] func(modelRequest *models.ListRequest, req *ListRequest[R])
 
-type ItemFn[T, RS any] func(data *T) *RS
+type ItemFn[T, RS any] func(req *T) (data *RS)
 
 type List[T, R, RS any] struct {
 	callback     ListRequestFn[R]

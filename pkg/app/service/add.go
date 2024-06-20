@@ -29,6 +29,8 @@ type IAdd interface {
 	Add(ctx *gin.Context) (err error)
 }
 
-func NewAdd[T, R any]() IAdd {
-	return new(Add[T, R])
+func NewAdd[T, R any](callback AddFn[T, R]) IAdd {
+	var t = new(Add[T, R])
+	t.callback = callback
+	return t
 }

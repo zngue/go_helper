@@ -4,59 +4,116 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/zngue/go_helper/pkg/api"
 	"github.com/zngue/go_helper/pkg/app/service"
-	"github.com/zngue/go_helper/pkg/util"
 )
 
-type Rn func(api.CommonApi) *DataInfo
+type FnApi func(api.CommonApi) *DataInfo
+
 type DataInfo struct {
-	Fn   gin.HandlerFunc
-	Path string
+	Fn     gin.HandlerFunc
+	Path   string
+	Method Method
 }
 
-func DataApiContent(data api.CommonApi) *DataInfo {
-	return
+type Method string
 
-}
+const (
+	GET  Method = "GET"
+	POST Method = "POST"
+)
 
-func Router[T any](routerName string, data service.IService[T], apiRouter *gin.RouterGroup, uris ...api.RouterConst) (router *gin.RouterGroup) {
-	var apiData = NewCommon[T](data)
-	router = apiRouter.Group(routerName)
-	if len(uris) > 0 {
-		if util.InArray(api.Content, uris) {
-			router.GET("content", apiData.Content())
+func DataApiContent() FnApi {
+	return func(commonApi api.CommonApi) *DataInfo {
+		return &DataInfo{
+			Fn:     commonApi.Content(),
+			Path:   "content",
+			Method: GET,
 		}
-		if util.InArray(api.List, uris) {
-			router.GET("list", apiData.List())
-		}
-		if util.InArray(api.ListPage, uris) {
-			router.GET("listPage", apiData.ListPage())
-		}
-		if util.InArray(api.UpdateFiled, uris) {
-			router.POST("updateFiled", apiData.UpdateFiled())
-		}
-		if util.InArray(api.Status, uris) {
-			router.POST("status", apiData.Status())
-		}
-		if util.InArray(api.Add, uris) {
-			router.POST("add", apiData.Add())
-		}
-		if util.InArray(api.Update, uris) {
-			router.POST("update", apiData.Update())
-		}
-		if util.InArray(api.Delete, uris) {
-			router.POST("delete", apiData.Delete())
-		}
-	} else {
-		router.GET("content", apiData.Content())
-		router.GET("list", apiData.List())
-		router.GET("listPage", apiData.ListPage())
-		router.POST("updateFiled", apiData.UpdateFiled())
-		router.POST("status", apiData.Status())
-		router.POST("add", apiData.Add())
-		router.POST("update", apiData.Update())
-		router.POST("delete", apiData.Delete())
 	}
+}
+func DataApiList() FnApi {
+	return func(commonApi api.CommonApi) *DataInfo {
+		return &DataInfo{
+			Fn:     commonApi.List(),
+			Path:   "list",
+			Method: GET,
+		}
+	}
+}
+func DataApiListPage() FnApi {
+	return func(commonApi api.CommonApi) *DataInfo {
+		return &DataInfo{
+			Fn:     commonApi.Content(),
+			Path:   "listPage",
+			Method: GET,
+		}
+	}
+}
 
+func DataApiAdd() FnApi {
+	return func(commonApi api.CommonApi) *DataInfo {
+		return &DataInfo{
+			Fn:     commonApi.Add(),
+			Path:   "add",
+			Method: POST,
+		}
+	}
+}
+func DataApiUpdate() FnApi {
+	return func(commonApi api.CommonApi) *DataInfo {
+		return &DataInfo{
+			Fn:     commonApi.Update(),
+			Path:   "update",
+			Method: POST,
+		}
+	}
+}
+func DataApiUpdateField() FnApi {
+	return func(commonApi api.CommonApi) *DataInfo {
+		return &DataInfo{
+			Fn:     commonApi.UpdateFiled(),
+			Path:   "updateField",
+			Method: POST,
+		}
+	}
+}
+func DataApiDelete() FnApi {
+	return func(commonApi api.CommonApi) *DataInfo {
+		return &DataInfo{
+			Fn:     commonApi.Delete(),
+			Path:   "delete",
+			Method: POST,
+		}
+	}
+}
+func DataApiCommon(fn gin.HandlerFunc, Path string, method Method) FnApi {
+	return func(commonApi api.CommonApi) *DataInfo {
+		return &DataInfo{
+			Fn:     fn,
+			Path:   Path,
+			Method: method,
+		}
+	}
+}
+
+func Router[T any](routerName string, dataServer service.IService[T], apiRouter *gin.RouterGroup, fns ...FnApi) (router *gin.RouterGroup) {
+	var dataApi = NewCommon[T](dataServer)
+	router = apiRouter.Group(routerName)
+	var fnUri []*DataInfo
+	for _, fn := range fns {
+		info := fn(dataApi)
+		if info != nil {
+			fnUri = append(fnUri, info)
+		}
+	}
+	if len(fnUri) > 0 {
+		for _, infoFn := range fnUri {
+			if infoFn.Method == POST {
+				router.POST(infoFn.Path, infoFn.Fn)
+			} else {
+				router.GET(infoFn.Path, infoFn.Fn)
+			}
+		}
+	}
 	return
 }
 
