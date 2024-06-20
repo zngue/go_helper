@@ -2,69 +2,48 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/zngue/go_helper/pkg/api"
+	"github.com/zngue/go_helper/pkg/app/service"
 	"github.com/zngue/go_helper/pkg/util"
 )
 
-type CommonApi interface {
-	Content() gin.HandlerFunc
-	Status() gin.HandlerFunc
-	UpdateFiled() gin.HandlerFunc
-	Add() gin.HandlerFunc
-	Update() gin.HandlerFunc
-	Delete() gin.HandlerFunc
-	List() gin.HandlerFunc
-	ListPage() gin.HandlerFunc
-}
-type Common[T any] struct {
-	common CommonService[T]
-}
-type RouterConst string
-
-const (
-	Add         RouterConst = "add"
-	Update      RouterConst = "update"
-	Delete      RouterConst = "delete"
-	List        RouterConst = "list"
-	ListPage    RouterConst = "listPage"
-	UpdateFiled RouterConst = "updateFiled"
-	Content     RouterConst = "content"
-	Status      RouterConst = "status"
-)
-
-func NewCommon[T any](common CommonService[T]) CommonApi {
-	data := new(Common[T])
-	data.common = common
-	return data
+type Rn func(api.CommonApi) *DataInfo
+type DataInfo struct {
+	Fn   gin.HandlerFunc
+	Path string
 }
 
-type RouterFn func(router *gin.RouterGroup)
+func DataApiContent(data api.CommonApi) *DataInfo {
+	return
 
-func Router[T any](routerName string, data CommonService[T], api *gin.RouterGroup, uris ...RouterConst) (router *gin.RouterGroup) {
+}
+
+func Router[T any](routerName string, data service.IService[T], apiRouter *gin.RouterGroup, uris ...api.RouterConst) (router *gin.RouterGroup) {
 	var apiData = NewCommon[T](data)
-	router = api.Group(routerName)
+	router = apiRouter.Group(routerName)
 	if len(uris) > 0 {
-		if util.InArray(Content, uris) {
+		if util.InArray(api.Content, uris) {
 			router.GET("content", apiData.Content())
 		}
-		if util.InArray(List, uris) {
+		if util.InArray(api.List, uris) {
 			router.GET("list", apiData.List())
 		}
-		if util.InArray(ListPage, uris) {
+		if util.InArray(api.ListPage, uris) {
 			router.GET("listPage", apiData.ListPage())
 		}
-		if util.InArray(UpdateFiled, uris) {
+		if util.InArray(api.UpdateFiled, uris) {
 			router.POST("updateFiled", apiData.UpdateFiled())
 		}
-		if util.InArray(Status, uris) {
+		if util.InArray(api.Status, uris) {
 			router.POST("status", apiData.Status())
 		}
-		if util.InArray(Add, uris) {
+		if util.InArray(api.Add, uris) {
 			router.POST("add", apiData.Add())
 		}
-		if util.InArray(Update, uris) {
+		if util.InArray(api.Update, uris) {
 			router.POST("update", apiData.Update())
 		}
-		if util.InArray(Delete, uris) {
+		if util.InArray(api.Delete, uris) {
 			router.POST("delete", apiData.Delete())
 		}
 	} else {
@@ -81,59 +60,68 @@ func Router[T any](routerName string, data CommonService[T], api *gin.RouterGrou
 	return
 }
 
+type Common[T any] struct {
+	common service.IService[T]
+}
+
+func NewCommon[T any](common service.IService[T]) api.CommonApi {
+	data := new(Common[T])
+	data.common = common
+	return data
+}
 func (c *Common[T]) Content() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var content, err = c.common.Content(ctx)
-		DataWithErr(ctx, err, content)
+		api.DataWithErr(ctx, err, content)
 	}
 }
 
 func (c *Common[T]) Status() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var err = c.common.Status(ctx)
-		DataWithErr(ctx, err, nil)
+		api.DataWithErr(ctx, err, nil)
 	}
 }
 
 func (c *Common[T]) UpdateFiled() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var err = c.common.UpdateFiled(ctx)
-		DataWithErr(ctx, err, nil)
+		var err = c.common.UpdateField(ctx)
+		api.DataWithErr(ctx, err, nil)
 	}
 }
 
 func (c *Common[T]) Add() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var err = c.common.Add(ctx)
-		DataWithErr(ctx, err, nil)
+		api.DataWithErr(ctx, err, nil)
 	}
 }
 
 func (c *Common[T]) Update() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var err = c.common.Update(ctx)
-		DataWithErr(ctx, err, nil)
+		api.DataWithErr(ctx, err, nil)
 	}
 }
 
 func (c *Common[T]) Delete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var err = c.common.Delete(ctx)
-		DataWithErr(ctx, err, nil)
+		api.DataWithErr(ctx, err, nil)
 	}
 }
 
 func (c *Common[T]) List() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var list, err = c.common.List(ctx)
-		DataWithErr(ctx, err, list)
+		api.DataWithErr(ctx, err, list)
 	}
 }
 
 func (c *Common[T]) ListPage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var list, count, err = c.common.ListPage(ctx)
-		DataWithErr(ctx, err, gin.H{
+		api.DataWithErr(ctx, err, gin.H{
 			"list":  list,
 			"count": count,
 		})
